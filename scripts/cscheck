@@ -1,0 +1,15 @@
+#!/bin/bash
+
+ruleset_dir="$HOME/put/you/path/here/vera"
+
+if [ -z $1 ]; then
+    exit
+fi
+
+OUT=$(echo $1 | vera++ --profile epitech --root $ruleset_dir --error 2>&1 \
+    | sed -n "s/.*:\([0-9]*\): error: \([A-Z]*:.*\)$/\1:\2/p" | sed "s/$/ /")
+
+for L in $OUT; do
+    echo -n $L | sed "s/C-.*//";
+    cat $ruleset_dir | grep "$(echo $L | sed "s/[0-9]*:[A-Z]*://")" --max-count 1
+done;
