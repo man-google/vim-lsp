@@ -1,7 +1,7 @@
 " --------------
 "  Clang parser
 " --------------
-" Run clang to current buffer to get syntax errors
+" Run clang in current buffer to get coding style errors
 " These commands are not written in the file and a temp file is used.
 " Dependencies:
 " - 'clang'
@@ -9,6 +9,14 @@
 
 let s:name="clang"
 let s:version="v1"
+
+fun! s:read_flags()
+    try
+        return readfile("compile_flags.txt")
+    catch /E484/
+    endtry
+    return [""]
+endfun
 
 fun! s:Parse()
     if !LspIsEnabled(s:name)
@@ -19,7 +27,7 @@ fun! s:Parse()
     endif
     let tmp_file = expand('%:h')."/clang_".expand('%:t')
     exec 'silent w!' tmp_file
-    let flags = readfile("compile_flags.txt")
+    let flags = s:read_flags()
     let compile_flags = substitute(join(flags, " "), ";", "\\\\;", "g")
     let content = split(system("clang -fsyntax-only ".compile_flags." ".tmp_file." 2>&1 | grep \"".tmp_file.":[0-9]*:[0-9]*: warning\\|".tmp_file.":[0-9]*:[0-9]*: error\" | sed \"s/ \\\[-.*\\\]//\""), "\n")
     exec 'silent !rm -f ' tmp_file
