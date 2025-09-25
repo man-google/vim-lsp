@@ -1,20 +1,34 @@
-" ------------------------------
-"  Vim Language Server Protocol
-" ------------------------------
-" Display info comments in current buffer.
-" LSPs must be in 'lsp' folder and be in Vimscript (.vim) format
-" Also, this is not a language server protocol, it just uses shell calls
+" -------------------------------
+"  Vim Language "Server Protocol"
+" -------------------------------
 "
+" Display info comments in current buffer.
+" LSPs must be in 'lsp' folder and be in Vimscript (*.vim).
+"
+" Also, this is not a language server protocol, it just uses shell calls and
+" buffer injection.
+"
+" File structure:
+" /home/you/.vim
+"            ├── lsp
+"            │   ├── lsp1.vim
+"            │   └── ...
+"            ├── lspconfig (generated)
+"            └── vim-lsp.vim
+"
+
+let g:VimLspVersion="v2"
 
 let s:root="~/.vim/"
 let s:lspconfig = glob(s:root)."/lspconfig"
+let g:LspReady=0
 
 let g:LspWarning = "!\\"
 let g:LspError = "x\\"
 let g:EnabledLsp = ""
 
 fun! LspDisplayLine(line, type, message)
-    call setline(a:line, getline(a:line)."    //".a:type." ".a:message)
+    call setline(a:line, getline(a:line)."     //".a:type." ".a:message)
     call LspUpdateDisplay()
 endfun
 
@@ -50,9 +64,13 @@ fun! LspStart(...)
         if !filereadable(file)
             echoerr "Lsp '".arg."'not found"
         else
-            call LspAdd(arg)
-            exec 'source' file
-            redraw!
+            if g:LspReady && system("grep -c '".arg."' ".s:lspconfig) > 0
+                echom "Lsp '".arg."' is already enabled"
+            else
+                call LspAdd(arg)
+                exec 'source' file
+                redraw!
+            endif
         endif
     endfor
 endfun
@@ -81,17 +99,20 @@ fun! LspReadConfig()
     if len(content) < 1
         return 1
     endif
+    let g:LspReady = 0
     for i in range(0, len(content) - 1)
         call LspStart(content[i])
     endfor
+    let g:LspReady = 1
 endfun
 
-func! LSPMenu(id, index)
+fun! LSPMenu(id, index)
     if (a:index == 1)
         let lsps = input('Enter lsp name(s): ')
         if empty(lsps)
             return 0
-        elseif lsps == "*"
+        endif
+        if lsps == "*"
             call LspStart()
         else
             call LspStart(split(lsps, " "))
@@ -117,7 +138,7 @@ endfunc
 
 command! LspMenu call popup_menu(['Enable LSP', 'Disable LSP', 'Clear messages', 'GitHub repo & help'],
      \ #{ title: " LSP ", callback: 'LSPMenu', line: 25, col: 40,
-     \ highlight: 'Question', border: [], close: 'click',  padding: [1,1,0,1]} )
+     \ highlight: 'a', border: [], close: 'click',  padding: [1,1,0,1]} )
 
 command! -nargs=* LspStart call LspStart(<f-args>)
 command! -nargs=* LspStop call LspStop(<f-args>)
