@@ -8,15 +8,7 @@
 
 
 let s:name="clang"
-let s:version="v1"
-
-fun! s:read_flags()
-    try
-        return readfile("compile_flags.txt")
-    catch /E484/
-    endtry
-    return [""]
-endfun
+let s:version="v2"
 
 fun! s:Parse()
     if !LspIsEnabled(s:name)
@@ -27,7 +19,7 @@ fun! s:Parse()
     endif
     let tmp_file = expand('%:h')."/clang_".expand('%:t')
     exec 'silent w!' tmp_file
-    let flags = s:read_flags()
+    let flags = filereadable(s:compile_flags_file) ? readfile(s:compile_flags_file) : [""]
     let compile_flags = substitute(join(flags, " "), ";", "\\\\;", "g")
     let content = split(system("clang -fsyntax-only ".compile_flags." ".tmp_file." 2>&1 | grep \"".tmp_file.":[0-9]*:[0-9]*: warning\\|".tmp_file.":[0-9]*:[0-9]*: error\" | sed \"s/ \\\[-.*\\\]//\""), "\n")
     exec 'silent !rm -f ' tmp_file
