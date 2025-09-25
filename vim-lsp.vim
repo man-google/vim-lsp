@@ -64,7 +64,7 @@ fun! LspStart(...)
         if !filereadable(file)
             echoerr "Lsp '".arg."'not found"
         else
-            if g:LspReady && system("grep -c '".arg."' ".s:lspconfig) > 0
+            if g:LspReady && system("grep -c '^".arg."$' ".s:lspconfig) > 0
                 echom "Lsp '".arg."' is already enabled"
             else
                 call LspAdd(arg)
