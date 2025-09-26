@@ -22,8 +22,8 @@ fun! s:Parse()
     endif
     let tmp_file = ".epiclang_".expand('%:t')
     exec 'silent w!' tmp_file
-    let flags = filereadable(s:compile_flags_file) ? readfile(s:compile_flags_file) : 0
-    let compile_flags = flags ? substitute(join(flags, " "), ";", "\\\\;", "g") : ""
+    let flags = filereadable(s:compile_flags_file) ? readfile(s:compile_flags_file) : []
+    let compile_flags = empty(flags) ? "" : substitute(join(flags, " "), ";", "\\\\;", "g")
     let cmd = s:base_cmd." ".s:base_cflags." ".compile_flags." ".tmp_file." 2>&1 | grep '".tmp_file.":[0-9]*:[0-9]*: warning\\: \\[Banana\\] ' | sed 's%".tmp_file.":\\([0-9]*\\):[0-9]*: warning: \\[Banana] \\[\\(.*\\)\\] \\(.*\\) (\\(C-.*\\))%\\1:\\2###\\4: \\3%'"
     let content = split(system(cmd), "\n")
     exec 'silent !rm -f ' tmp_file
