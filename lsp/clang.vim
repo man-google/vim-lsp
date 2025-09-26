@@ -10,6 +10,8 @@
 let s:name="clang"
 let s:version="v2"
 
+let s:compile_flags_file="compile_flags.txt"
+
 fun! s:Parse()
     if !LspIsEnabled(s:name)
         au! Lsp_clang
